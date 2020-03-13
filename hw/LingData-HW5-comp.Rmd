@@ -1,7 +1,14 @@
 ---
-title: 'HW 5: Correlations and linear models. Tests for categorial variables'
-output: pdf_document
+title: "HW 5: Correlations and linear models. Tests for categorial variables"
+author: "andrea grillandi"
+date: "4/3/2020"
+output: html_document
 ---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
 
 ```{r setup, include=FALSE}
 library(tidyverse)
@@ -21,14 +28,16 @@ The dataset is available [https://raw.githubusercontent.com/agricolamz/2018-MAG_
 ### 1.0 
 Read the data from file to the variable `shva`.
 ```{r 1.0}
-
+df <- read_delim("https://raw.githubusercontent.com/agricolamz/2018-MAG_R_course/master/data/duryagin_ReductionRussian.txt", delim="\t")
+# df$vowel <- gsub("a", "a-min", df$vowel)
 ```
 
 ### 1.1 
 Scatterplot `f1` and `f2` using `ggplot()`. 
 Design it to look like the [following](https://raw.githubusercontent.com/agricolamz/2018-MAG_R_course/master/img/duryagin1.png).
 ```{r 1.1}
-
+p <- ggplot(df, aes(x=f2, y=f1, color=vowel))
+p + scale_x_reverse() + scale_y_reverse() + geom_point()
 ```
 
 ### 1.2 
@@ -36,19 +45,33 @@ Plot the boxplots of `f1` and `f2` for each vowel using `ggplot()`.
 Design it to look like [this](https://raw.githubusercontent.com/agricolamz/2018-MAG_R_course/master/img/duryagin2.png) and [this](https://raw.githubusercontent.com/agricolamz/2018-MAG_R_course/master/img/duryagin3.png).
 ```{r 1.2}
 # f1 boxplot
+ggplot(df, aes(x=vowel, y=f1, fill=vowel)) +
+  geom_boxplot(width=0.6, size=0.8, color="grey30") +
+  coord_flip()
 
 # f2 boxplot
+ggplot(df, aes(x=vowel, y=f2, fill=vowel)) +
+  geom_boxplot(width=0.6, size=0.8, color="grey30") +
+  coord_flip()
 ```
 
 ### 1.3 
 Calculate Pearson's correlation of `f1` and `f2` (all data)
 ```{r 1.3}
-
+cor.test(df$f1, df$f2)
 ```
 
 ### 
 1.4 Calculate Pearson's correlation of `f1` and `f2` for each vowel
 ```{r 1.4}
+filter(df, vowel == "A") -> A
+cor.test(A$f1, A$f2)
+
+filter(df, vowel == "a-min") -> a
+cor.test(a$f1, a$f2)
+
+filter(df, vowel == "y") -> y
+cor.test(y$f1, y$f2)
 
 ```
 
@@ -57,25 +80,29 @@ Calculate Pearson's correlation of `f1` and `f2` (all data)
 ### 2.1.1 
 Use the linear regression model to predict `f2` by `f1`.
 ```{r 2.1.1}
+model1 <- lm(data = df, f2 ~ f1)
+summary(model1)
 
 ```
 
 ### 2.1.2 
 Write down the equation for f2 using coefficients from the model (e.g. $y =  b + kx$)
 ```{r 2.1.2}
-
+f2 = 1639.70215 - 0.42875*f1
 ```
 
 ### 2.1.3 
 Provide the adjusted R$^2$
 ```{r 2.1.3}
-
+Adjusted R-squared:  0.3319
 ```
 
 ### 2.1.4 
 Add the regression line in the scatterplot 1.1.
 ```{r 2.1.4}
-
+ggplot(df, aes(x=f2, y=f1)) +
+  scale_x_reverse() + scale_y_reverse() + geom_point() +
+  geom_smooth(method=lm)
 ```
 
 ### 2.1.5 
@@ -83,32 +110,37 @@ Make a scatter plot for `f1` and `f2` grouped by vowels.
 Use `ggplot()` and `facet_wrap()`.
 
 ```{r 2.1.5}
-
+ggplot(df, aes(x=f2, y=f1)) +
+  scale_x_reverse() + scale_y_reverse() + geom_point(color="darkblue") +
+  geom_smooth(method=lm) + 
+  facet_wrap(vars(vowel))
 ```
 
 ### 2.2.1 
 Use the linear regression model to predict `f2` by `f1` and `vowel`.
 ```{r 2.2.1}
+model2 <- lm(data = df, f2 ~ f1 + vowel)
+summary(model2)
 
 ```
 
 ### 2.2.2 
 What is the intercept of the model?
 ```{r 2.2.2}
-
+(Intercept) 1365.91639
 ```
 
 ### 2.2.3 
 Provide the adjusted R$^2$
 ```{r 2.2.3}
-
+Adjusted R-squared:  0.4801
 ```
 
 ### 2.2.4 
 Write down your general conclusions about the relationship between `f1`, `f2`, and `vowels`.
 
 ```
-
+Since R-squared is not too high, we can conclude that the obtained linear model doesn't ideally describe the relationship between the dipendend (f2), and the indipendent varible, constituted by the parameters f1 and vowel.
 ```
 
 ## 3. Dutch causative constructions
@@ -144,19 +176,24 @@ summary(d_caus)
 ### 3.1 
 We are going to test whether the association between `Aux` and other categorical variables (`Aux` ~ `CrSem`, `Aux` ~ `CeSem`, etc) is statistically significant. The assiciation with which variable should be analysed using Fisher's Exact Test and not using Pearson's Chi-squared Test? Is this association statistically significant?
 ```{r 3.1}
-
+res <- chisq.test(d_caus$Aux, d_caus$CeSynt)
+res$expected
+#Fisher's Exact Test should be on those variables that, after drawing a Perfect Independent Contingency table, present a and expected frequency lower than 5. For example, as we can see in the table below, the expected cell frequency of Clause with respect to the causative auxiliary is thought to be to low for the Chi-square test to be exact.
 ```
 
 ### 3.2. 
 Test the hypothesis that `Aux` and `EPTrans` are not independent with the help of Pearson's Chi-squared Test. 
 ```{r 3.2}
-
+chisq.test(d_caus$EPTrans, d_caus$Aux)
+res1 <- chisq.test(d_caus$EPTrans, d_caus$Aux)
+# we have to reject the null hypothesis according two which the two variables are independent.
 ```
 
 ### 3.3 
 Provide expected frequencies for Pearson's Chi-squared Test of `Aux` and `EPTrans` variables.
 ```{r 3.3}
-
+res1$expected
+res1$observed
 ```
 
 ### 3.4. 
@@ -170,35 +207,41 @@ $$
 one can find *odds ratio* as $(a/c)/(b/d)$.
 
 ```{r 3.4}
-
-
+odds_ratio_obs <- (57/28)/(182/233)
+odds_ratio_obs
 ```
 
 ### 3.4.1 
 Find odds ratio for expected frequencies of `Aux` and `EPTrans`
 
 ```{r 3.4.1}
-
+odds_ratio_exp <- (40.63/44.37)/(198.37/216.63)
+odds_ratio_exp
 ```
 What can you say about odds ratio of expected frequencies for arbitrary data?
+```
+When data is gathered in the expected frequencies table, data is not skewed, hence odds ratios do not vary across multiples parameters. In other words, an expected frequencies table represents the perfect case when null hypothesis holds.
+```
 
 ### 3.5 
 Calculate effect size for this test using Cramer's V (phi).
 ```{r 3.5}
-
+cramersV(res1$observed)
 ```
 
 ### 3.6. 
 Report the results of independence test using the following template:
 ```
-We have / have not found a significant association between variables ... and ... (p < 0.001).  The odds of ... were ... times higher / lower in (group ....) than in (group ....). Effect size is large / medium / small (Cramer's V = ....).
+We have found a significant association between variables Aux and EPTrans (p < 0.001).  The odds of intransitivity over transitivity were 2.606162 times higher in 'doen' than in 'laten' group. Effect size is small (Cramer's V = 0.1691587).
 ```
 
 ### 3.7 
 Visualize the distribution using mosaic plot.
 Use `mosaic()` function from `vcd` library.
 ```{r 3.7}
-
+mosaic(data = d_caus, Aux ~ EPTrans, 
+       set_varnames = list(Aux = "Type of Auxiliary", 
+                           EPTrans = "Transitivity"))
 ```
 
 Below is an example of how to use mosaic() with three variables.
@@ -209,11 +252,16 @@ Below is an example of how to use mosaic() with three variables.
 ### 3.8 
 Why is it not recommended to run multiple Chisq tests of independence on different variables within your dataset whithout adjusting for the multiplicity? (i.e. just testing all the pairs of variables one by one)  
 ```
-
+Because, as in other statistical comparison tests, if multiple hypothesis are tested, the chance of observing a rare event increases as well, hence the probability of incorrectly rejecting null hypothesis is higher. That is why we need multiplicity adjustment like Bonferroni test.
 ```
 
 ### 3.9 
 Provide a short text (300 words) describing the hypothesis of this study and the results of your analysis.
-```{r 3.9}
+```
+In the previous exercises we carried out some tests on data from Natalia Levshina’s study on two Dutch near-synonymous periphrastic causative verbs, ‘doen’ (do) and ‘laten’ (let). The tests we conducted so far, though, were focused only on one of the many parameters that were used in the experiment. More specifically, we reproduced some tests on transitivity, which, in our data frame, goes by the name of EPTrans.
+According to the reference paper, EPTrans indicates transitivity (including ditransitivity), or intransitivity. According to studies preceding this one, ‘laten’ is more favored by transitive verbs, which assumption corroborates another one, according to which, ‘laten’ is more favored by animate causers. The most typical configuration of ‘laten’ corresponds to animate causer and causee, expressing an indirect effect of causation, because animated beings cannot directly influence other beings’ minds. Since this is the most favored configuration, ‘laten’ needs transitivity to be “fully” expressed, which is, needs to take two direct arguments (a causer and a causee).
+At first, we verified whether there was a strong relation between the variable Aux (‘laten’ or ‘doen’) and EPTrans, using Chi-square test (assuming null hypothesis = the variables are independent). According to the Chi-square test we ran, null hypothesis was rejected, hence the variables are not independent. 
+Then, we looked at the odds ratio. Looking at the odds ratio, it is clear how the proportion of intransitive construction over transitive ones in much higher for the group ‘doen’. This validates also the opposite assumption, which is, the proportion of transitive construction over intransitive ones is greater in the ‘laten’ group. This fact validates the initial assumption according to which ‘laten’ is favored by the transitive construction. This statement is clear also by looking at the mosaic table.
+At the end, we also ran a Cramer’s V test, which again tests the dependency of the two variables, but also with regards to the amount of observations. As a conclusion, the two variables appear to be moderately dependent one from the other.
 
 ```
